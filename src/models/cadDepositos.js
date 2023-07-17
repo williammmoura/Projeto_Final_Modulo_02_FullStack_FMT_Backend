@@ -1,7 +1,7 @@
 const { Sequelize } = require('sequelize');
 const { connection } = require('../database/connection');
 
-const CadDeposito = connection.define("cadDeposito", {
+const CadDeposito = connection.define("cad_deposito", {
     //Aqui vai as colunas da tabela 'cadDeposito'
     usuario_id: Sequelize.INTEGER,
     razao_social: Sequelize.STRING,

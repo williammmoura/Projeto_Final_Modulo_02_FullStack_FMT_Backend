@@ -1,7 +1,7 @@
 const { Sequelize } = require('sequelize');
 const { connection } = require('../database/connection');
 
-const CadMedicamento = connection.define('cadMedicamento', {
+const CadMedicamento = connection.define('cad_medicamento', {
     usuario_responsavel: Sequelize.STRING,
     deposito_id: Sequelize.STRING,
     nome_medicamento: Sequelize.STRING,
