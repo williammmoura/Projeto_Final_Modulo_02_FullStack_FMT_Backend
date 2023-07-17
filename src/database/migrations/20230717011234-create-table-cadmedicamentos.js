@@ -14,10 +14,6 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false
       },
-      deposito_is: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
       deposito_id: {
         type: Sequelize.STRING,
         allowNull: false
@@ -61,6 +57,10 @@ module.exports = {
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false
+      },
+      deleted_at: {
+        type: Sequelize.DATE,
+        allowNull: true
       }
     });
   },
