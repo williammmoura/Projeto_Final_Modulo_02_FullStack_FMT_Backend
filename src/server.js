@@ -8,7 +8,7 @@ const app = express()
 const routes = require('./routes/index')
 const { connection } = require('./database/connection')
 
-app.use(express.json())
+app.use(express.json()) // O servidor pode receber JSON.
 app.use(routes)
 connection.authenticate()
 

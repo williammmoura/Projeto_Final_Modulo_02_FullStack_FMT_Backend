@@ -8,7 +8,12 @@ const CadUser = connection.define('cad_user', {
     dt_nascimento: Sequelize.DATE,
     cpf: Sequelize.STRING,
     telefone: Sequelize.STRING,
-    email: Sequelize.STRING,
+    email: {
+        type: Sequelize.STRING,
+        unique: {
+            msg: "Este e-mail já está cadastrado."
+        }
+    },
     senha: Sequelize.STRING,
     status: {
         type: Sequelize.ENUM('Ativo', 'Inativo'),
