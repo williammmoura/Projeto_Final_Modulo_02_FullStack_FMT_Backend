@@ -1,230 +1,225 @@
 /**
  * Regra de negócio do Cadastro de Usuários
  */
-const { CadUser } = require('../models/cadUser');
-const { sign } = require('jsonwebtoken');
+const { CadUsers } = require('../models/cadUsers');
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = process.env;
 
 class CadUserController {
 
     // Criar um Usuário
-    async createOneUser(req, res) {
+    async criarUsuario(req, res) {
         try {
-            const {
-                nome,
-                sobrenome,
-                genero,
-                dt_nascimento,
-                cpf,
-                telefone,
-                email,
-                senha
-            } = req.body;
+            const { nome, sobrenome, cpf, email, senha, data_nascimento } = req.body;
 
-            // Validar os campos obrigatórios:
-            if (!nome || !sobrenome || !cpf || !email || !senha) {
-                return res.status(400).send({
-                    error: "Todos os campos obrigatórios devem ser preenchidos."
-                });
-            }
-
-            // Verificar se o CPF já está cadastrado no banco de dados:
-            const existeUser = await CadUser.findOne({
+            // Verificar se o CPF já foi cadastrado no sistema
+            const usuarioExistente = await CadUsers.findOne({
                 where: { cpf }
             });
-            if (existeUser) {
+            if (usuarioExistente) {
                 return res.status(409).send({
-                    error: "Este CPF já está cadastrado."
+                    message: 'CPF já cadastrado no sistema.',
+                    cause: error.message
                 });
             }
 
-            // Criar um novo usuário no banco de dados:
-            const newCadUser = await CadUser.create({
+            // Cadastrar o usuário
+            const usuario = await CadUsers.create({
                 nome,
                 sobrenome,
-                genero,
-                dt_nascimento,
                 cpf,
-                telefone,
                 email,
                 senha,
-                status: 'Ativo'
+                data_nascimento,
             });
 
-            //Retorna a resposta de sucesso.
-            return res.status(201).send({ newCadUser })
-        } catch (error) {
-            return res.status(500).send({
-                "message": "Erro ao criar o usuário.",
-                "cause": error.message
+            // Retornar os campos adicionais
+            return res.status(201).send({
+                id: usuario.id,
+                nome: usuario.nome,
+                sobrenome: usuario.sobrenome,
+                cpf: usuario.cpf,
+                email: usuario.email,
+                status: usuario.status,
+                data_nascimento: usuario.data_nascimento,
+                identificador: usuario.identificador,
             });
-        }
-    }
-
-    // Login do Usuário
-    async loginUser(req, res) {
-        try {
-            const { email, senha } = req.body;
-
-            // Verificando se o e-mail e senha foram fornecidos
-            if (!email || !senha) {
-                return res.status(400).send({
-                    error: "O e-mail e senha são obrigatórios."
-                })
-            }
-
-            // Buscar o usuário pelo e-mail
-            const usuario = await CadUser.findOne({
-                where: { email }
-            })
-
-            // Verificar se o usuário existe
-            if (!usuario) {
-                return res.status(404).send({
-                    error: "O e-mail não está cadastrado."
-                })
-            }
-
-            // Verificar se a senha está correta
-            if (senha !== usuario.senha) {
-                return res.status(400).send({
-                    error: "A senha está incorreta"
-                })
-            }
-
-            const payload = {
-                email: existeUser.email,
-                nome: existeUser.nome
-            }
-
-            // Gerar o token de autenticação
-            const token = sign(payload, process.env.SECRET, {
-                expiresIn: '1d'
-            })
-
-            return res.status(200).send({ token })
-        } catch (error) {
-            return res.status(404).send({
-                message: error.message
-            })
-        }
-    }
-
-    // Atualização dos dados de Usuário
-    async atualizaUsuario(req, res) {
-        try {
-            const { id } = req.params;
-            const { nome, sobrenome, genero, telefone } = req.body;
-
-            // Verificar se o usuário exeste
-            const usuario = await CadUser.findByPk(id);
-            if (!usuario) {
-                return res.status(404).send({
-                    error: "Usuário não encontrados."
-                });
-            }
-
-            // Atualizar os campos permitidos
-            if (nome) usuario.nome = nome;
-            if (sobrenome) usuario.sobrenome = sobrenome;
-            if (genero) usuario.genero = genero;
-            if (telefone) usuario.telefone = telefone;
-
-            // Salvar as alterações no banco de dados
-            await usuario.save();
-
-            // Retorna a respesta de sucesso
-            return res.status(204).send();
         } catch (error) {
             return res.status(400).send({
-                error: "Erro ao atualizar os dados do usuário.",
+                message: 'Erro ao cadastrar usuário.',
                 cause: error.message
             });
         }
     }
 
-    // Atualizar Status do Usuário
-    async atualizaStatus(req, res) {
+    // Login do Usuário
+    async loginUsuario(req, res) {
         try {
-            const { id } = req.params;
-            const { status } = req.body;
+            const { email, senha } = req.body;
 
-            // Verificar se o usuário existe
-            const usuario = await CadUser.findByPk(id);
+            // Verificar se o e-mail do usuário existe no sistema
+            const usuario = await CadUsers.findOne({
+                where: { email }
+            });
             if (!usuario) {
                 return res.status(404).send({
-                    error: "Usuário não encontrado."
+                    message: 'E-mail não encontrado.',
+                    cause: error.message
                 });
             }
 
-            // Atualizar o status
-            usuario.status = status;
+            // Verificar se a senha está correta
+            if (usuario.senha !== senha) {
+                return res.status(400).send({
+                    message: 'Senha inválida.',
+                    cause: error.message
+                });
+            }
 
-            // Salvar as alterações no banco de dados.
+            // Gerar o token de autenticação
+            const token = jwt.sign({ id: usuario.id }, JWT_SECRET, { expiresIn: '1d' });
+
+            // Retornar o token
+            return res.status(200).send({ token });
+        } catch (error) {
+            return res.status(400).send({
+                message: 'Erro ao realizar login.',
+                cause: error.message
+            });
+        }
+    }
+
+    // Atualização dos dados de Usuário
+    async atualizarUsuario(req, res) {
+        try {
+            const { identificador } = req.params;
+            const { nome, sobrenome, genero, telefone } = req.body;
+
+            // Verificar se o usuário com o identificador informado existe no sistema
+            const usuario = await CadUsers.findByPk(identificador);
+            if (!usuario) {
+                return res.status(404).send({
+                    message: 'Usuário não encontrado.',
+                    cause: error.message
+                });
+            }
+
+            // Atualizar os campos do usuário com os valores informados no corpo da requisição
+            if (nome) {
+                usuario.nome = nome;
+            }
+            if (sobrenome) {
+                usuario.sobrenome = sobrenome;
+            }
+            if (genero) {
+                usuario.genero = genero;
+            }
+            if (telefone) {
+                usuario.telefone = telefone;
+            }
+
+            // Salvar as alterações no banco de dados
             await usuario.save();
 
-            // Retorna a resposta de sucesso com os dados atualizados do usuário.
+            // Retornar os dados atualizados do usuário
+            return res.status(204).send(usuario);
+        } catch (error) {
+            return res.status(400).send({
+                message: 'Erro ao atualizar os dados do usuário',
+                cause: error.message
+            
+            });
+        }
+    }
+
+    // Atualizar Status do Usuário
+    async atualizarStatusUsuario(req, res) {
+        try {
+            const { identificador } = req.params;
+            const { status } = req.body;
+
+            // Verificar se o usuário com o identificador informado existe no sistema
+            const usuario = await CadUsers.findByPk(identificador);
+            if (!usuario) {
+                return res.status(404).send({
+                    message: 'Usuário não encontrado.',
+                    cause: error.message
+                });
+            }
+
+            // Atualizar o status do usuário com o valor informado no corpo da requisição
+            if (status) {
+                usuario.status = status;
+            }
+
+            // Salvar as alterações no banco de dados
+            await usuario.save();
+
+            // Retornar os dados atualizados do usuário
             return res.status(200).send(usuario);
         } catch (error) {
             return res.status(400).send({
-                error: "Erro ao atualizar o status do usuário.",
+                message: 'Erro ao atualizar o status do usuário.',
                 cause: error.message
             });
         }
     }
 
     // Atualização de Senha do Usuário.
-    async atualizaSenha(req, res) {
+    async atualizarSenhaUsuario(req, res) {
         try {
-            const { id } = req.params;
+            const { identificador } = req.params;
             const { senha } = req.body;
 
-            // Verificar se o usuário existe
-            const usuario = await CadUser.findByPk(id);
+            // Verificar se o usuário com o identificador informado existe no sistema
+            const usuario = await CadUsers.findByPk(identificador);
             if (!usuario) {
                 return res.status(404).send({
-                    error: "Usuário não encontrado."
+                    message: 'Usuário não encontrado.',
+                    cause: error.message
                 });
             }
 
-            // Atualizar a senha do usuário
-            usuario.senha = senha;
+            // Atualizar a senha do usuário com o valor informado no corpo da requisição
+            if (senha) {
+                usuario.senha = senha;
+            }
 
             // Salvar as alterações no banco de dados
             await usuario.save();
 
-            // Retorna a resposta de sucesso
-            return res.status(204).send();
+            // Retornar uma resposta de sucesso sem conteúdo (204 - No Content)
+            return res.status(204).end();
         } catch (error) {
             return res.status(400).send({
-                error: "Erro ao atualizar a senha do usuário.",
+                message: 'Erro ao atualizar a senha do usuário.',
                 cause: error.message
             });
         }
     }
 
     // Listagem de Usuário pelo identificador
-    async listaUsuarioId(req, res) {
+    async consultarUsuarioPorId(req, res) {
         try {
-            const { id } = req.params;
+            const { identificador } = req.params;
 
-            // Buscar o usuário pelo identificador
-            const usuario = await CadUser.findByPk(id, {
-                attributes: { exclude: ['senha'] } // Excluir o campo "senha" da resposta
+            // Consultar o usuário pelo identificador no banco de dados
+            const usuario = await CadUsers.findByPk(identificador, {
+                attributes: { exclude: ['senha'] }, // Excluir o campo de senha do resultado da consulta
             });
 
-            // Verificar se o usuário existe
+            // Verificar se o usuário foi encontrado
             if (!usuario) {
-                return res.status(404).send({
-                    error: "Usuário não encontrado."
+                return res.status(404).send({ 
+                    error: 'Usuário não encontrado.' 
                 });
             }
 
-            // Retorna os dados do usuário
+            // Retornar os dados do usuário no response
             return res.status(200).send(usuario);
         } catch (error) {
-            return res.status(500).send({
-                error: "Erro ao buscar o usuário.",
-                cause: error.message
+            return res.status(400).send({ 
+                error: 'Erro ao consultar o usuário.' 
             });
         }
     }
