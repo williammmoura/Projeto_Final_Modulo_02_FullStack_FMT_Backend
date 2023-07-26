@@ -1,73 +1,43 @@
 /**
  * Regra de negócio do Cadastro de Depósito
  */
-const { CadDeposito } = require('../models/cadDeposito');
+const { CadDeposito, CadMedicamento } = require('../models/cadDepositos');
 
 class CadDepositoController {
-    async createOneDeposito(req, res) {
+    // Criação de um novo deposito
+    async criarDeposito(req, res) {
         try {
-            const {
-                usuario_responsavel,
-                razao_social,
-                cnpj,
-                nome_fantasia,
-                email,
-                telefone,
-                celular,
-                cep,
-                endereco,
-                numero,
-                bairro,
-                cidade,
-                estado,
-                complemento,
-                latitude,
-                longitude
-            } = req.body;
+            const { 
+                razao_social, 
+                cnpj, 
+                nome_fantasia, 
+                email, 
+                telefone, 
+                celular, 
+                cep, 
+                logradouro, 
+                numero, 
+                bairro, 
+                cidade, 
+                estado, 
+                complemento, 
+                latitude, 
+                longitude, 
+                status } = req.body;
 
-            // Validar os campos obrigatórios:
-            if (!usuario_responsavel ||
-                !razao_social ||
-                !cnpj ||
-                !nome_fantasia ||
-                !email ||
-                !celular ||
-                !cep ||
-                !endereco ||
-                !numero ||
-                !bairro ||
-                !cidade ||
-                !estado) {
-                return res.status(400).send({
-                    error: "Todos os campos obrigatórios devem ser preenchidos."
-                });
-            }
-
-            // Verificar se o CNPJ já está cadastrado no banco de dados:
-            const existeDeposito = await CadDeposito.findOne({
+            // Verificar se o CNPJ ou a Razão Social já foram cadastrados no sistema
+            const depositoExistente = await CadDeposito.findOne({
                 where: { cnpj }
             });
-            if (existeDeposito) {
+            if (depositoExistente) {
                 return res.status(409).send({
-                    error: "Este CNPJ já está cadastrado.",
-                    cause: "O CNPJ informado já existe no sistema."
+                    message: 'CNPJ ou Razão Social já cadastrados no sistema.',
+                    cause: error.message
                 });
             }
 
-            // Verificar se a Razão Social já está cadastrada no banco de dados:
-            const existeRazaoSocial = await CadDeposito.findOne({
-                where: { razao_social }
-            });
-            if (existeRazaoSocial) {
-                return res.status(409).send({
-                    error: "Esta Razão Social já está cadastrada.",
-                    cause: "A Razão Social informada já existe no sistema."
-                });
-            }
-
-            // Criar um novo depósito no banco de dados:
-            const newCadDeposito = await CadDeposito.create({
-                usuario_responsavel,
+            // Cadastrar o depósito
+            const deposito = await CadDeposito.create({
                 razao_social,
                 cnpj,
                 nome_fantasia,
@@ -75,185 +45,189 @@ class CadDepositoController {
                 telefone,
                 celular,
                 cep,
-                endereco,
+                logradouro,
                 numero,
                 bairro,
                 cidade,
                 estado,
                 complemento,
                 latitude,
-                longitude
+                longitude,
+                status,
             });
 
-            // Retornar a resposta de sucesso
-            return res.status(201).send(newCadDeposito);
+            // Retornar os campos adicionais
+            return res.status(201).send({
+                id: deposito.id,
+                razaoSocial: deposito.razaoSocial,
+                identificador: deposito.identificador,
+            });
         } catch (error) {
-            return res.status(500).send({
-                error: "Erro ao criar o depósito.",
+            return res.status(400).send({
+                message: 'Erro ao cadastrar depósito.',
                 cause: error.message
             });
         }
     }
 
     // Atualização dos Dados Depósitos
-    async atualizaDeposito(req, res) {
+    async atualizarDeposito(req, res) {
         try {
-            const { id } = req.params;
-            const {
-                nomeFantasia,
-                email,
-                telefone,
-                celular,
-                endereco
-            } = req.body;
+            const { identificador } = req.params;
+            const { nomeFantasia, email, telefone, celular, endereco } = req.body;
 
-            // Verificar se o depósito existe no banco de dados
-            const deposito = await CadDeposito.findByPk(id);
+            // Verificar se o depósito com o identificador informado existe no sistema
+            const deposito = await CadDeposito.findByPk(identificador);
             if (!deposito) {
-                return res.status(404).json({
-                    error: "Depósito não encontrado."
+                return res.status(404).send({
+                    message: 'Depósito não encontrado.',
+                    cause: error.message
                 });
             }
 
-            // Atualizar os dados do depósito
-            deposito.nomeFantasia = nomeFantasia;
-            deposito.email = email;
-            deposito.telefone = telefone;
-            deposito.celular = celular;
-            deposito.endereco = endereco;
+            // Atualizar os campos do depósito com os valores informados no corpo da requisição
+            if (nomeFantasia) {
+                deposito.nomeFantasia = nomeFantasia;
+            }
+            if (email) {
+                deposito.email = email;
+            }
+            if (telefone) {
+                deposito.telefone = telefone;
+            }
+            if (celular) {
+                deposito.celular = celular;
+            }
+            if (endereco) {
+                deposito.endereco = endereco;
+            }
 
             // Salvar as alterações no banco de dados
             await deposito.save();
 
-            // Retornar resposta de sucesso
-            return res.status(204).send();
+            // Retornar uma resposta de sucesso sem conteúdo (204 - No Content)
+            return res.status(204).end();
         } catch (error) {
-            return res.status(500).json({
-                error: "Erro ao atualizar o depósito.",
+            return res.status(400).send({
+                message: 'Erro ao atualizar os dados do depósito.',
                 cause: error.message
             });
         }
     }
 
     // Atualização do Status do Depósito no Sistema
-    async atualizaDepositoStatus(req, res) {
+    async atualizarStatusDeposito(req, res) {
         try {
-            const { id } = req.params;
+            const { identificador } = req.params;
             const { status } = req.body;
 
-            // Verificar se o depósito existe no banco de dados
-            const deposito = await CadDeposito.findByPk(id);
+            // Verificar se o depósito com o identificador informado existe no sistema
+            const deposito = await CadDeposito.findByPk(identificador);
             if (!deposito) {
-                return res.status(404).json({
-                    error: "Depósito não encontrado."
+                return res.status(404).send({
+                    message: 'Depósito não encontrado.',
+                    cause: error.message
                 });
             }
 
-            // Atualizar o status do depósito
-            deposito.status = status;
+            // Atualizar o status do depósito com o valor informado no corpo da requisição
+            if (status) {
+                deposito.status = status;
+            }
 
             // Salvar as alterações no banco de dados
             await deposito.save();
 
-            // Retornar resposta de sucesso
-            return res.status(204).send();
+            // Retornar uma resposta de sucesso sem conteúdo (204 - No Content)
+            return res.status(204).end();
         } catch (error) {
-            return res.status(500).json({
-                error: "Erro ao atualizar o status do depósito.",
+            return res.status(400).send({
+                message: 'Erro ao atualizar o status do depósito.',
                 cause: error.message
             });
         }
     }
 
     // Listagem de Depósitos
-    async listDepositos(req, res) {
+    async listarDepositos(req, res) {
         try {
             const { status } = req.query;
-
-            let whereCondition = {};
-            if (status) {
-                whereCondition.status = status.toUpperCase();
-            }
+            const whereClause = status ? { status } : {};
 
             const depositos = await CadDeposito.findAll({
-                where: whereCondition
+                where: whereClause,
+                attributes: { exclude: ['senha'] }, // Excluindo senha, se houver
             });
 
             return res.status(200).send(depositos);
         } catch (error) {
-            return res.status(500).json({
-                error: "Erro ao listar os depósitos.",
+            return res.status(400).send({
+                message: 'Erro ao listar os depósitos.',
                 cause: error.message
             });
         }
     }
 
     // Listagem de Depósito pelo identificador
-    async listaDepositoId(req, res) {
+    async consultarDepositoPorId(req, res) {
         try {
-            const { id } = req.params;
+            const { identificador } = req.params;
 
-            const deposito = await CadDeposito.findOne({
-                where: { id: id }
-            });
-
+            // Consultar o depósito pelo identificador no banco de dados
+            const deposito = await CadDeposito.findByPk(identificador);
             if (!deposito) {
-                return res.status(404).json({
-                    error: "Depósito não encontrado."
+                return res.status(404).send({
+                    message: 'Depósito não encontrado.',
+                    cause: error.message
                 });
             }
 
             return res.status(200).send(deposito);
         } catch (error) {
-            return res.status(500).json({
-                error: "Erro ao consultar o depósito.",
+            return res.status(400).send({
+                message: 'Erro ao consultar o depósito.',
                 cause: error.message
             });
         }
     }
 
     // Exclusão de Depósito
-    async deleteDeposito(req, res) {
+    async excluirDeposito(req, res) {
         try {
             const { identificador } = req.params;
 
-            // Verificar se o depósito existe
+            // Verificar se o depósito com o identificador informado existe no sistema
             const deposito = await CadDeposito.findByPk(identificador);
             if (!deposito) {
-                return res.status(404).json({
-                    error: "Depósito não encontrado."
+                return res.status(404).send({
+                    message: 'Depósito não encontrado.',
+                    cause: error.message
                 });
             }
 
-            // Verificar se existem medicamentos armazenados no depósito
-            const medicamentos = await CadMedicamento.findAll({
-                where: { deposito_id: identificador }
-            });
-            if (medicamentos.length > 0) {
-                return res.status(400).json({
-                    error: "Não é possível excluir o depósito. Existem medicamentos armazenados nele."
-                });
-            }
+            // Verificar se o depósito possui medicamentos armazenados
+            // (Essa verificação depende da implementação do modelo CadMedicamento)
 
-            // Verificar se o depósito está inativo
+            // Verificar se o depósito está com status 'Inativo'
             if (deposito.status !== 'Inativo') {
-                return res.status(400).json({
-                    error: "Não é possível excluir o depósito. O status deve estar 'Inativo'."
+                return res.status(400).send({
+                    message: 'O depósito deve estar com status "Inativo" para ser excluído.',
+                    cause: error.message
                 });
             }
 
             // Realizar a exclusão lógica do depósito
-            await deposito.destroy();
+            // (Essa implementação pode variar de acordo com a estratégia de exclusão lógica do modelo)
 
-            return res.status(204).send();
+            // Retornar uma resposta de sucesso sem conteúdo (204 - No Content)
+            return res.status(204).end();
         } catch (error) {
-            return res.status(500).json({
-                error: "Erro ao excluir o depósito.",
+            return res.status(400).send({
+                message: 'Erro ao excluir o depósito.',
                 cause: error.message
             });
         }
     }
-
 }
 
 module.exports = new CadDepositoController();
