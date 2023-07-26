@@ -2,15 +2,17 @@
  * Arquivo para enviar todas as rotas
  */
 
-const { routesFromCadUser } = require('./cadUser.routes')
-const { routesFromCadDeposito } = require('./cadDeposito.routes')
-const { routesFromCadMedicamento } = require('./cadMedicamento.routes')
 const { Router } = require('express')
+const { routesFromCadUseers } = require('./cadUsers.routes')
+const { routesFromCadDepositos } = require('./cadDepositos.routes')
+const { routesFromCadMedicamentos } = require('./cadMedicamentos.routes')
 
-const routes = Router()
+const routes = new Router()
 
-routes.use('/api', routesFromCadUser())
-routes.use('/api', routesFromCadDeposito())
-routes.use('/api', routesFromCadMedicamento())
+routes.use('/api', [
+    routesFromCadUseers(),
+    routesFromCadDepositos(),
+    routesFromCadMedicamentos()
+])
 
 module.exports = routes
