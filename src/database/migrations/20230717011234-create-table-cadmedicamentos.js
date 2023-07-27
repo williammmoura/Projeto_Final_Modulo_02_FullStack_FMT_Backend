@@ -6,62 +6,64 @@ module.exports = {
     await queryInterface.createTable('cad_medicamentos', { 
       id: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        primaryKey: true,
         autoIncrement: true,
-        primaryKey: true
+        allowNull: false,
       },
       usuario_responsavel: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
-      deposito_id: {
+      deposito: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
       nome_medicamento: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
       nome_laboratorio: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
       descricao: {
         type: Sequelize.STRING,
-        allowNull: true
+        allowNull: true,
       },
       dosagem: {
-        type: Sequelize.INTEGER,
-        allowNull: false
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
       },
       unidade_dosagem: {
-        type: Sequelize.ENUM('mg','mcg','g','mL','%', 'Outro'),
-        allowNull: false
+        type: Sequelize.ENUM('mg', 'mcg', 'g', 'mL', '%', 'Outro'),
+        allowNull: false,
       },
       tipo: {
-        type: Sequelize.ENUM('Medicamento Controlado','Medicamento não Controlado'),
-        allowNull: false
+        type: Sequelize.ENUM('Medicamento Controlado', 'Medicamento Não Controlado'),
+        allowNull: false,
       },
       preco_unitario: {
-        type: Sequelize.FLOAT,
-        allowNull: false
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
       },
       quantidade: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull: false,
       },
       created_at: {
         type: Sequelize.DATE,
-        allowNull: false
+        allowNull: false,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updated_at: {
         type: Sequelize.DATE,
-        allowNull: false
+        allowNull: false,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       deleted_at: {
         type: Sequelize.DATE,
-        allowNull: true
-      }
+        allowNull: true,
+      },
     });
   },
 

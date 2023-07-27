@@ -2,42 +2,61 @@
  * Regra de negócio do Cadastro de Depósito
  */
 const { CadDeposito, CadMedicamento } = require('../models/cadDepositos');
+const jwt = require('jsonwebtoken');
 
 class CadDepositoController {
     // Criação de um novo deposito
     async criarDeposito(req, res) {
         try {
-            const { 
-                razao_social, 
-                cnpj, 
-                nome_fantasia, 
-                email, 
-                telefone, 
-                celular, 
-                cep, 
-                logradouro, 
-                numero, 
-                bairro, 
-                cidade, 
-                estado, 
-                complemento, 
-                latitude, 
-                longitude, 
-                status } = req.body;
+            // Obter o token JWT do cabeçalho da solicitação
+            const token = req.headers.authorization;
+
+            // Verificar se o token foi fornecido
+            if (!token) {
+                return res.status(401).send({
+                    message: 'Token JWT não fornecido.',
+                });
+            }
+
+            // Decodificar o token JWT para obter os dados do usuário, incluindo o usuario_id
+            const decodedToken = jwt.verify(token.replace('Bearer ', ''), process.env.JWT_SECRET);
+
+            // Extrair o usuario_id do token decodificado
+            const usuario_id = decodedToken.usuario_id;
+
+            // Extrair os dados do corpo da requisição
+            const {
+                razao_social,
+                cnpj,
+                nome_fantasia,
+                email,
+                telefone,
+                celular,
+                cep,
+                logradouro,
+                numero,
+                bairro,
+                cidade,
+                estado,
+                complemento,
+                latitude,
+                longitude,
+                status,
+            } = req.body;
 
             // Verificar se o CNPJ ou a Razão Social já foram cadastrados no sistema
             const depositoExistente = await CadDeposito.findOne({
-                where: { cnpj }
+                where: { cnpj },
             });
             if (depositoExistente) {
                 return res.status(409).send({
                     message: 'CNPJ ou Razão Social já cadastrados no sistema.',
-                    cause: error.message
                 });
             }
 
             // Cadastrar o depósito
             const deposito = await CadDeposito.create({
+                usuario_id: decodedToken.usuario_id, // Usando o usuario_id obtido do token JWT
                 razao_social,
                 cnpj,
                 nome_fantasia,
@@ -59,13 +78,13 @@ class CadDepositoController {
             // Retornar os campos adicionais
             return res.status(201).send({
                 id: deposito.id,
-                razaoSocial: deposito.razaoSocial,
-                identificador: deposito.identificador,
+                razaoSocial: deposito.razao_social,
+                identificador: deposito.usuario_id,
             });
         } catch (error) {
             return res.status(400).send({
                 message: 'Erro ao cadastrar depósito.',
-                cause: error.message
+                cause: error.message,
             });
         }
     }

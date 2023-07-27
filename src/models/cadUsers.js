@@ -31,6 +31,9 @@ const CadUsers = connection.define('cad_users', {
     cpf: {
         type: Sequelize.STRING(11),
         allowNull: false,
+        unique: {
+            msg: "Este cpf já está cadastrado."
+        }
     },
     telefone: {
         type: Sequelize.STRING,
@@ -42,6 +45,9 @@ const CadUsers = connection.define('cad_users', {
         validate: {
             isEmail: true,
         },
+        unique: {
+            msg: "Este e-mail já está cadastrado."
+        }
     },
     senha: {
         type: Sequelize.STRING,

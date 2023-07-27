@@ -77,11 +77,19 @@ class CadUserController {
             }
 
             // Gerar o token de autenticação
-            const token = jwt.sign({ id: usuario.id }, JWT_SECRET, { expiresIn: '1d' });
+            const payload = {
+                id: usuario.id,
+                email: usuario.email,
+                name: usuario.name,
+            }
+
+            const token = sign(payload, process.env.SECRET, {
+                expiresIn: '1d'
+            })
 
             // Retornar o token
             return res.status(200).send({ token });
-        } catch (error) {
+            } catch (error) {
             return res.status(400).send({
                 message: 'Erro ao realizar login.',
                 cause: error.message
@@ -127,7 +135,7 @@ class CadUserController {
             return res.status(400).send({
                 message: 'Erro ao atualizar os dados do usuário',
                 cause: error.message
-            
+
             });
         }
     }
@@ -210,16 +218,16 @@ class CadUserController {
 
             // Verificar se o usuário foi encontrado
             if (!usuario) {
-                return res.status(404).send({ 
-                    error: 'Usuário não encontrado.' 
+                return res.status(404).send({
+                    error: 'Usuário não encontrado.'
                 });
             }
 
             // Retornar os dados do usuário no response
             return res.status(200).send(usuario);
         } catch (error) {
-            return res.status(400).send({ 
-                error: 'Erro ao consultar o usuário.' 
+            return res.status(400).send({
+                error: 'Erro ao consultar o usuário.'
             });
         }
     }

@@ -1,177 +1,162 @@
 /**
  * Regra de negócio do Cadastro de Medicamentos
  */
-const { CadMedicamento } = require('../models/cadMedicamento');
+const { CadMedicamento } = require('../models/cadMedicamentos');
 
 class CadMedicamentoController {
-    async createOneMedicamento(req, res) {
+    // Cadastro de Medicamento
+    async cadastrarMedicamento(req, res) {
         try {
             const {
-                usuario_responsavel,
-                deposito_id,
-                nome_medicamento,
-                nome_laboratorio,
+                identificadorUsuario,
+                identificadorDeposito,
+                nomeMedicamento,
+                nomeLaboratorio,
                 descricao,
                 dosagem,
-                unidade_dosagem,
+                unidadeDosagem,
                 tipo,
-                preco_unitario,
+                precoUnitario,
                 quantidade
             } = req.body;
 
-            // Validar os campos obrigatórios:
-            if (!usuario_responsavel || 
-                !deposito_id || 
-                !nome_medicamento || 
-                !nome_laboratorio || 
-                !dosagem || 
-                !unidade_dosagem || 
-                !tipo || 
-                !preco_unitario || 
-                !quantidade) {
-                return res.status(400).send({
-                    error: "Todos os campos obrigatórios devem ser preenchidos."
-                });
-            }
-
-            // Verificar se o nome do medicamento já está cadastrado no banco de dados:
-            const existeMedicamento = await CadMedicamento.findOne({
-                where: { nome_medicamento }
+            // Verificar se o nome do medicamento já foi cadastrado no sistema
+            const medicamentoExistente = await CadMedicamento.findOne({
+                where: { nomeMedicamento }
             });
-            if (existeMedicamento) {
+            if (medicamentoExistente) {
                 return res.status(409).send({
-                    error: "Este medicamento já está cadastrado.",
-                    cause: "O nome do medicamento informado já existe no sistema."
+                    error: 'Nome de medicamento já cadastrado no sistema.'
                 });
             }
 
-            // Criar um novo medicamento no banco de dados:
-            const newCadMedicamento = await CadMedicamento.create({
-                usuario_responsavel,
-                deposito_id,
-                nome_medicamento,
-                nome_laboratorio,
+            // Cadastrar o medicamento
+            const medicamento = await CadMedicamento.create({
+                identificadorUsuario,
+                identificadorDeposito,
+                nomeMedicamento,
+                nomeLaboratorio,
                 descricao,
                 dosagem,
-                unidade_dosagem,
+                unidadeDosagem,
                 tipo,
-                preco_unitario,
+                precoUnitario,
                 quantidade
             });
 
-            // Retornar a resposta de sucesso
-            return res.status(201).send(newCadMedicamento);
+            // Retornar os campos adicionais
+            return res.status(201).send({
+                id: medicamento.id,
+                nomeMedicamento: medicamento.nomeMedicamento,
+                identificador: medicamento.identificador,
+            });
         } catch (error) {
-            return res.status(500).send({
-                error: "Erro ao criar o medicamento.",
-                cause: error.message
+            return res.status(400).send({
+                error: 'Erro ao cadastrar medicamento.'
             });
         }
     }
 
     // Atualização dos dados do Medicamento
-    async atualizaMedicamento(req, res) {
+    async atualizarMedicamento(req, res) {
         try {
-            const { id } = req.params;
-            const { descricao, preco_unitario, quantidade } = req.body;
+            const { identificador } = req.params;
+            const { descricao, precoUnitario, quantidade } = req.body;
 
-            // Verificar se o medicamento existe no banco de dados
-            const medicamento = await CadMedicamento.findByPk(id);
+            // Verificar se o medicamento com o identificador informado existe no sistema
+            const medicamento = await CadMedicamento.findByPk(identificador);
             if (!medicamento) {
                 return res.status(404).send({
-                    error: "Medicamento não encontrado.",
-                    cause: "O identificador do medicamento não existe no sistema."
+                    error: 'Medicamento não encontrado.'
                 });
             }
 
-            // Atualizar os campos do medicamento
-            medicamento.descricao = descricao;
-            medicamento.preco_unitario = preco_unitario;
-            medicamento.quantidade = quantidade;
+            // Atualizar os campos do medicamento com os valores informados no corpo da requisição
+            if (descricao) {
+                medicamento.descricao = descricao;
+            }
+            if (precoUnitario) {
+                medicamento.precoUnitario = precoUnitario;
+            }
+            if (quantidade) {
+                medicamento.quantidade = quantidade;
+            }
 
             // Salvar as alterações no banco de dados
             await medicamento.save();
 
-            // Retornar a resposta de sucesso
+            // Retornar os dados atualizados do medicamento
             return res.status(200).send(medicamento);
         } catch (error) {
             return res.status(400).send({
-                error: "Erro ao atualizar o medicamento.",
-                cause: error.message
+                error: 'Erro ao atualizar os dados do medicamento.'
             });
         }
     }
 
     // Listagem de Medicamentos
-    async listMedicamento(req, res) {
+    async listarMedicamentos(req, res) {
         try {
             const { tipo } = req.query;
+            const whereClause = tipo ? { tipo } : {};
 
-            // Construir o filtro para a consulta
-            const filtro = tipo ? { tipo } : {};
+            const medicamentos = await CadMedicamento.findAll({
+                where: whereClause,
+            });
 
-            // Realizar a consulta dos medicamentos
-            const medicamentos = await CadMedicamento.findAll({ where: filtro });
-
-            // Retornar a lista de medicamentos
             return res.status(200).send(medicamentos);
         } catch (error) {
-            return res.status(500).send({
-                error: "Erro ao listar os medicamentos.",
-                cause: error.message
+            return res.status(400).send({
+                error: 'Erro ao listar os medicamentos.',
             });
         }
     }
 
     // Listagem de Medicamento pelo identificador
-    async listaMedicamentoId(req, res) {
+    async consultarMedicamentoPorId(req, res) {
         try {
-            const { id } = req.params;
+            const { identificador } = req.params;
 
-            // Consultar o medicamento pelo identificador
-            const medicamento = await CadMedicamento.findByPk(id);
-
-            // Verificar se o medicamento existe
+            // Consultar o medicamento pelo identificador no banco de dados
+            const medicamento = await CadMedicamento.findByPk(identificador);
             if (!medicamento) {
                 return res.status(404).send({
-                    error: "Medicamento não encontrado."
+                    error: 'Medicamento não encontrado.',
                 });
             }
 
-            // Retornar os dados do medicamento
             return res.status(200).send(medicamento);
         } catch (error) {
-            return res.status(500).send({
-                error: "Erro ao buscar o medicamento.",
-                cause: error.message
+            return res.status(400).send({
+                error: 'Erro ao consultar o medicamento.',
             });
         }
     }
 
     // Exclusão de Medicamento
-    async deleteMedicamento(req, res) {
+    async excluirMedicamento(req, res) {
         try {
             const { identificador } = req.params;
 
-            // Consultar o medicamento pelo identificador
+            // Verificar se o medicamento com o identificador informado existe no sistema
             const medicamento = await CadMedicamento.findByPk(identificador);
-
-            // Verificar se o medicamento existe
             if (!medicamento) {
                 return res.status(404).send({
-                    error: "Medicamento não encontrado."
+                    error: 'Medicamento não encontrado.',
                 });
             }
 
-            // Excluir o medicamento (exclusão lógica)
-            await medicamento.destroy();
+            // Realizar a exclusão lógica do medicamento
+            medicamento.ativo = false;
 
-            // Retornar o status 204 (No Content)
+            // Salvar as alterações no banco de dados
+            await medicamento.save();
+
+            // Retornar uma resposta de sucesso sem conteúdo (204 - No Content)
             return res.status(204).end();
         } catch (error) {
-            return res.status(500).send({
-                error: "Erro ao excluir o medicamento.",
-                cause: error.message
+            return res.status(400).send({
+                error: 'Erro ao excluir o medicamento.',
             });
         }
     }
