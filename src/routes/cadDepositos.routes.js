@@ -18,5 +18,4 @@ class CadDepositosRouter {
     }
 }
 
-
 module.exports = new CadDepositosRouter()

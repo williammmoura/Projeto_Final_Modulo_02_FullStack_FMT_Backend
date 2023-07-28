@@ -1,8 +1,10 @@
 /**
  * Regra de negócio do Cadastro de Depósito
  */
+const { config } = require('dotenv');
 const { CadDeposito, CadMedicamento } = require('../models/cadDepositos');
 const jwt = require('jsonwebtoken');
+config()
 
 class CadDepositoController {
     // Criação de um novo deposito
@@ -14,12 +16,14 @@ class CadDepositoController {
             // Verificar se o token foi fornecido
             if (!token) {
                 return res.status(401).send({
-                    message: 'Token JWT não fornecido.',
+                    message: 'Token JWT não fornecido.'
                 });
             }
 
             // Decodificar o token JWT para obter os dados do usuário, incluindo o usuario_id
-            const decodedToken = jwt.verify(token.replace('Bearer ', ''), process.env.JWT_SECRET);
+            const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+
+            console.log(decodedToken.id)
 
             // Extrair o usuario_id do token decodificado
             const usuario_id = decodedToken.usuario_id;
@@ -48,15 +52,10 @@ class CadDepositoController {
             const depositoExistente = await CadDeposito.findOne({
                 where: { cnpj },
             });
-            if (depositoExistente) {
-                return res.status(409).send({
-                    message: 'CNPJ ou Razão Social já cadastrados no sistema.',
-                });
-            }
 
             // Cadastrar o depósito
             const deposito = await CadDeposito.create({
-                usuario_id: decodedToken.usuario_id, // Usando o usuario_id obtido do token JWT
+                usuario_id: decodedToken.id, // Usando o usuario_id obtido do token JWT
                 razao_social,
                 cnpj,
                 nome_fantasia,
@@ -82,9 +81,10 @@ class CadDepositoController {
                 identificador: deposito.usuario_id,
             });
         } catch (error) {
+            console.log(error)
             return res.status(400).send({
                 message: 'Erro ao cadastrar depósito.',
-                cause: error.message,
+                cause: error.message
             });
         }
     }
@@ -93,7 +93,17 @@ class CadDepositoController {
     async atualizarDeposito(req, res) {
         try {
             const { identificador } = req.params;
-            const { nomeFantasia, email, telefone, celular, endereco } = req.body;
+            const { 
+                nome_fantasia, 
+                email, 
+                telefone, 
+                celular, 
+                logradouro,
+                numero,
+                bairro,
+                cidade,
+                estado,
+                status} = req.body;
 
             // Verificar se o depósito com o identificador informado existe no sistema
             const deposito = await CadDeposito.findByPk(identificador);
@@ -105,8 +115,8 @@ class CadDepositoController {
             }
 
             // Atualizar os campos do depósito com os valores informados no corpo da requisição
-            if (nomeFantasia) {
-                deposito.nomeFantasia = nomeFantasia;
+            if (nome_fantasia) {
+                deposito.nome_fantasia = nome_fantasia;
             }
             if (email) {
                 deposito.email = email;
@@ -117,8 +127,23 @@ class CadDepositoController {
             if (celular) {
                 deposito.celular = celular;
             }
-            if (endereco) {
-                deposito.endereco = endereco;
+            if (logradouro) {
+                deposito.logradouro = logradouro;
+            }
+            if (numero) {
+                deposito.numero = numero;
+            }
+            if (bairro) {
+                deposito.bairro = bairro;
+            }
+            if (cidade) {
+                deposito.cidade = cidade;
+            }
+            if (estado) {
+                deposito.estado = estado;
+            }
+            if (status) {
+                deposito.status = status;
             }
 
             // Salvar as alterações no banco de dados

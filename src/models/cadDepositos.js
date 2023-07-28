@@ -20,10 +20,16 @@ const CadDeposito = connection.define("cad_depositos", {
     razao_social: {
         type: Sequelize.STRING,
         allowNull: false,
+        unique: {
+            msg:"Razão Social já cadastrada."
+        },
     },
     cnpj: {
         type: Sequelize.STRING,
         allowNull: false,
+        unique: {
+            msg:"CPNJ já cadastrado."
+        },
     },
     nome_fantasia: {
         type: Sequelize.STRING,
