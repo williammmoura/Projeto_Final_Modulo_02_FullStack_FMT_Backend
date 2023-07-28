@@ -1,7 +1,7 @@
 const { criarUsuario, loginUsuario, atualizarUsuario, atualizarStatusUsuario, atualizarSenhaUsuario, consultarUsuarioPorId } = require('../controllers/cadUser.controller');
 const { Router } = require('express');
 
-class cadUsersRouter{
+class CadUsersRouter{
     routesFromCadUseers (){
         const cadUsersRoutes = Router()
 
@@ -18,4 +18,4 @@ class cadUsersRouter{
     }    
 }
 
-module.exports = new cadUsersRouter();
+module.exports = new CadUsersRouter();

@@ -2,8 +2,9 @@
  * Regra de negócio do Cadastro de Usuários
  */
 const { CadUsers } = require('../models/cadUsers');
-const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = process.env;
+require('jsonwebtoken');
+const { JWT_SECRET }  = process.env;
+const { sign } = require('jsonwebtoken')
 
 class CadUserController {
 
@@ -83,7 +84,7 @@ class CadUserController {
                 name: usuario.name,
             }
 
-            const token = sign(payload, process.env.SECRET, {
+            const token = sign(payload, process.env.JWT_SECRET, {
                 expiresIn: '1d'
             })
 
