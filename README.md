@@ -94,3 +94,16 @@ Isso iniciará o servidor e estará pronto para receber solicitações na porta 
 Você pode testar as rotas usando uma ferramenta de API client, como o Postman, Thunder Client ou outro.
 
 Agora você deve ser capaz de executar o projeto localmente em seu ambiente de desenvolvimento.
+
+<br>
+<br>
+
+<h2>Possíveis Melhorias</h2>
+
+- **1. Autenticação e Autorização**
+
+Adicionar um sistema de autenticação e autorização para proteger rotas sensíveis, permitindo que apenas usuários autenticados tenham acesso a determinados recursos.
+
+- **2. Criptografia de Dados Sensíveis**
+
+Se houver informações sensíveis no banco de dados, garantir que elas sejam criptografadas adequadamente para proteger a privacidade dos usuários.
