@@ -6,6 +6,13 @@ const { Sequelize } = require('sequelize');
 const { connection } = require('../database/connection');
 
 const CadUsers = connection.define('cad_users', {
+    id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    
     nome: {
         type: Sequelize.STRING(20),
         allowNull: false,
@@ -13,6 +20,7 @@ const CadUsers = connection.define('cad_users', {
             len: [2, 20],
         },
     },
+
     sobrenome: {
         type: Sequelize.STRING(20),
         allowNull: false,
@@ -20,25 +28,35 @@ const CadUsers = connection.define('cad_users', {
             len: [2, 20],
         },
     },
+
     genero: {
         type: Sequelize.STRING,
         allowNull: true,
     },
+
     data_nascimento: {
         type: Sequelize.DATE,
         allowNull: false,
+        validate: {
+            isDate: true,
+        }
     },
+
     cpf: {
         type: Sequelize.STRING(11),
         allowNull: false,
         unique: {
             msg: "Este cpf já está cadastrado."
+        },
+        len: {
+            args: [11, 11], msg: "CPF precisa ter 11 números."
         }
     },
     telefone: {
         type: Sequelize.STRING,
         allowNull: true,
     },
+
     email: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -49,12 +67,22 @@ const CadUsers = connection.define('cad_users', {
             msg: "Este e-mail já está cadastrado."
         }
     },
+
     senha: {
         type: Sequelize.STRING,
         allowNull: false,
         validate: {
-            len: [8],
-            is: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, // Pelo menos 1 letra maiúscula, 1 letra minúscula e 1 número
+            len: {
+                args: [8,150], msg: "A senha deve ter no mínimo 8 caracteres."
+            },
+            strongPassword(value){
+                const strongPasswordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()])[a-zA-Z\d!@#$%^&*()]+$/;;
+                if (!strongPasswordRegex.test(value)){
+                    throw new Error(
+                        "Senha deve conter pelo menos 1 letra maiúscula, 1 número e 1 caracter especial."
+                    )
+                }
+            }
         },
     },
     status: {
@@ -62,6 +90,18 @@ const CadUsers = connection.define('cad_users', {
         allowNull: false,
         defaultValue: 'Ativo',
     },
-},{ underscored: true, paranoid: true, freezeTableName: true});// Objeto de configuração -> Essas opções definem que as colunas da tabela serão nomeadas usando a convenção "snake_case" (underscored) e que o modelo terá suporte a exclusão lógica (soft delete) por meio da coluna "deletedAt". Evita a pluralização do nome do modelo para o nome da tabela.
+},{ underscored: true, paranoid: true });
+
+CadUsers.associate = (models) => {
+    CadUsers.belongsTo(models.CadDepositos,{
+        foreignKey: "deposito_id",
+        allowNull: false
+    }),
+
+    CadUsers.hasMany = (models.cadMedicamentos,{
+        foreignKey: "medicamento_id",
+        allowNull: false
+    })
+}
 
 module.exports = { CadUsers };

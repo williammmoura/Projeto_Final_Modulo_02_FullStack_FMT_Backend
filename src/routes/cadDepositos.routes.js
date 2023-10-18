@@ -1,18 +1,19 @@
 const { criarDeposito, atualizarDeposito, atualizarStatusDeposito, listarDepositos, consultarDepositoPorId, excluirDeposito } = require('../controllers/cadDeposito.controller')
 const { Router } = require('express')
+const { authMiddleware } = require('../middlewares/authMiddleware')
 
 class CadDepositosRouter {
     routesFromCadDepositos(){
         const cadDepositosRoutes = Router()
 
         cadDepositosRoutes.post('/depositos', criarDeposito)
-        cadDepositosRoutes.patch('/depositos/:identificador', atualizarDeposito)
+        cadDepositosRoutes.patch('/depositos/:id', atualizarDeposito)
 
         //Endpoint privados
-        cadDepositosRoutes.patch('/depositos/:identificador/status', atualizarStatusDeposito)
-        cadDepositosRoutes.get('/depositos', listarDepositos)
-        cadDepositosRoutes.get('/depositos/:identificador', consultarDepositoPorId)
-        cadDepositosRoutes.delete('/depositos/:identificador',excluirDeposito)
+        cadDepositosRoutes.patch('/depositos/:id/status', authMiddleware,  atualizarStatusDeposito)
+        cadDepositosRoutes.get('/depositos', authMiddleware, listarDepositos)
+        cadDepositosRoutes.get('/depositos/:id', authMiddleware, consultarDepositoPorId)
+        cadDepositosRoutes.delete('/depositos/:id', authMiddleware, excluirDeposito)
 
         return cadDepositosRoutes
     }

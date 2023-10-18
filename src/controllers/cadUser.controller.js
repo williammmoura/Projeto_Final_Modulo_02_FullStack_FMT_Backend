@@ -11,7 +11,14 @@ class CadUserController {
     // Criar um Usuário
     async criarUsuario(req, res) {
         try {
-            const { nome, sobrenome, cpf, email, senha, data_nascimento } = req.body;
+            const { 
+                nome, 
+                sobrenome, 
+                cpf, 
+                email, 
+                senha, 
+                data_nascimento 
+            } = req.body;
 
             // Verificar se o CPF já foi cadastrado no sistema
             const usuarioExistente = await CadUsers.findOne({
@@ -42,8 +49,7 @@ class CadUserController {
                 cpf: usuario.cpf,
                 email: usuario.email,
                 status: usuario.status,
-                data_nascimento: usuario.data_nascimento,
-                identificador: usuario.identificador,
+                data_nascimento: usuario.data_nascimento
             });
         } catch (error) {
             return res.status(400).send({
@@ -84,7 +90,7 @@ class CadUserController {
                 name: usuario.name,
             }
 
-            const token = sign(payload, process.env.JWT_SECRET, {
+            const token = sign(payload, process.env.SECRET_JWT, {
                 expiresIn: '1d'
             })
 
@@ -101,11 +107,11 @@ class CadUserController {
     // Atualização dos dados de Usuário
     async atualizarUsuario(req, res) {
         try {
-            const { identificador } = req.params;
+            const { id } = req.params;
             const { nome, sobrenome, genero, telefone } = req.body;
 
-            // Verificar se o usuário com o identificador informado existe no sistema
-            const usuario = await CadUsers.findByPk(identificador);
+            // Verificar se o usuário com o id informado existe no sistema
+            const usuario = await CadUsers.findByPk(id);
             if (!usuario) {
                 return res.status(404).send({
                     message: 'Usuário não encontrado.',
@@ -131,7 +137,8 @@ class CadUserController {
             await usuario.save();
 
             // Retornar os dados atualizados do usuário
-            return res.status(204).send(usuario);
+            return res.status(204).send(usuario)
+
         } catch (error) {
             return res.status(400).send({
                 message: 'Erro ao atualizar os dados do usuário',
@@ -144,11 +151,11 @@ class CadUserController {
     // Atualizar Status do Usuário
     async atualizarStatusUsuario(req, res) {
         try {
-            const { identificador } = req.params;
+            const { id } = req.params;
             const { status } = req.body;
 
-            // Verificar se o usuário com o identificador informado existe no sistema
-            const usuario = await CadUsers.findByPk(identificador);
+            // Verificar se o usuário com o id informado existe no sistema
+            const usuario = await CadUsers.findByPk(id);
             if (!usuario) {
                 return res.status(404).send({
                     message: 'Usuário não encontrado.',
@@ -177,11 +184,11 @@ class CadUserController {
     // Atualização de Senha do Usuário.
     async atualizarSenhaUsuario(req, res) {
         try {
-            const { identificador } = req.params;
+            const { id } = req.params;
             const { senha } = req.body;
 
-            // Verificar se o usuário com o identificador informado existe no sistema
-            const usuario = await CadUsers.findByPk(identificador);
+            // Verificar se o usuário com o id informado existe no sistema
+            const usuario = await CadUsers.findByPk(id);
             if (!usuario) {
                 return res.status(404).send({
                     message: 'Usuário não encontrado.',
@@ -207,13 +214,13 @@ class CadUserController {
         }
     }
 
-    // Listagem de Usuário pelo identificador
+    // Listagem de Usuário pelo id
     async consultarUsuarioPorId(req, res) {
         try {
-            const { identificador } = req.params;
+            const { id } = req.params;
 
-            // Consultar o usuário pelo identificador no banco de dados
-            const usuario = await CadUsers.findByPk(identificador, {
+            // Consultar o usuário pelo id no banco de dados
+            const usuario = await CadUsers.findByPk(id, {
                 attributes: { exclude: ['senha'] }, // Excluir o campo de senha do resultado da consulta
             });
 
